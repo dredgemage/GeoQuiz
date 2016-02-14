@@ -10,7 +10,6 @@
         android:id="@+id/question_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="The Pacific Ocean is larger than the Atlantic Ocean."
         android:padding="24dp"/>
 
     <LinearLayout

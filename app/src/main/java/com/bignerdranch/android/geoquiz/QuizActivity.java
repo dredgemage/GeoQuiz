@@ -1,5 +1,7 @@
 package com.bignerdranch.android.geoquiz;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -28,26 +30,26 @@ public class QuizActivity extends AppCompatActivity {
     private ImageButton mNextButton;
     private TextView mQuestionTextView;
 
-    private ArrayList<String> Questions = new ArrayList<String>();
-    private ArrayList<Boolean> Answers = new ArrayList<Boolean>();
+    private ArrayList<String> Questions = new ArrayList<>();
+    private ArrayList<Boolean> Answers = new ArrayList<>();
     private Question[] mQuestionBank = new Question[11];
-
-    /**private Question[] mQuestionBank = new Question[] {
-            new Question(R.string.question_oceans, true),
-            new Question(R.string.question_mideast, false),
-            new Question(R.string.question_africa, false),
-            new Question(R.string.question_americas, true),
-            new Question(R.string.question_asia, true)
-    };**/
 
     private int mCurrentIndex = 0;
 
     private void updateQuestion() {
+        Log.d("DEBUG", "updateQuestion called");
         String question = Questions.get(mCurrentIndex).substring(1);
         mQuestionTextView.setText(question);
+
+        SharedPreferences sharedpreferences = getSharedPreferences("GeoQuizPREFS", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putInt("mCurrentIndex", mCurrentIndex);
+        editor.commit();
+        Log.d("DEBUG", "updateQuestion finished");
     }
 
     private void checkAnswer(boolean userPressedTrue) {
+        Log.d("DEBUG", "checkAnswer called");
         boolean answerIsTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
 
         int messageResId;
@@ -60,21 +62,62 @@ public class QuizActivity extends AppCompatActivity {
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
             .show();
+        Log.d("DEBUG", "checkAnswer finished");
+    }
+
+    private void resetQuestions() {
+        Log.d("DEBUG", "resetQuestions called");
+        //use AssetManager to get image file names for enabled regions
+        AssetManager assets = getAssets();
+        try {
+            String[] filenames = assets.list("QuestionBank");
+            for (String filename : filenames) {
+                try {
+                    InputStream json = assets.open("QuestionBank" + "/" + filename);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(json, "UTF-8"));
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        Questions.add(line);
+                    }
+                    in.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        for (String q : Questions) {
+            Answers.add(q.substring(0,1).equals("T"));
+            q = q.substring(1);
+            Log.d("Questions", q);
+        }
+        for (int testingvariable = 0; testingvariable < Questions.size(); testingvariable++){
+            if (Answers.get(testingvariable) == Boolean.TRUE) {
+                Log.d("Answers", "True");
+            } else {
+                Log.d("Answers", "False");
+            }
+        }
+        Log.d("DEBUG", "resetQuestions finished");
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
-        Log.d("DEBUG", "Quiz.Activity created.");
         resetQuestions();
-        Log.d("DEBUG", "Questions reset");
 
         for (int i = 0; i < Questions.size(); i++) {
             mQuestionBank[i] = new Question(Questions.get(i), Answers.get(i));
-            Log.d("Question", mQuestionBank[i].getQuestion());
         }
-        Log.d("DEBUG", "onCreate phase 2");
+
+        SharedPreferences sharedpreferences = getSharedPreferences("GeoQuizPREFS", Context.MODE_PRIVATE);
+        int restoredQuestion = sharedpreferences.getInt("mCurrentIndex", 0);
+        if (restoredQuestion != 0) {
+            mCurrentIndex = restoredQuestion;
+            Log.d("DEBUG", "GeoQuizPREFS loaded");
+        }
 
         mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
         mQuestionTextView.setOnClickListener(new View.OnClickListener() {
@@ -126,43 +169,6 @@ public class QuizActivity extends AppCompatActivity {
         updateQuestion();
     }
 
-    private void resetQuestions() {
-        Log.d("DEBUG", "resetQuestions called");
-        //use AssetManager to get image file names for enabled regions
-        AssetManager assets = getAssets();
-        try {
-            String[] filenames = assets.list("QuestionBank");
-            for (String filename : filenames) {
-                try {
-                    InputStream json = assets.open("QuestionBank" + "/" + filename);
-                    BufferedReader in = new BufferedReader(new InputStreamReader(json, "UTF-8"));
-                    String line = null;
-                    while ((line = in.readLine()) != null) {
-                        Questions.add(line);
-                    }
-                    in.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        for (String q : Questions) {
-            Answers.add(q.substring(0,1).equals("T"));
-            q = q.substring(1);
-            Log.d("Questions", q);
-        }
-        for (int testingvariable = 0; testingvariable < 5; testingvariable++){
-            if (Answers.get(testingvariable) == Boolean.TRUE) {
-                Log.d("Answers", "True");
-            } else {
-                Log.d("Answers", "False");
-            }
-        }
-        Log.d("DEBUG", "resetQuestions finished");
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -176,9 +182,6 @@ public class QuizActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return id == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 }
