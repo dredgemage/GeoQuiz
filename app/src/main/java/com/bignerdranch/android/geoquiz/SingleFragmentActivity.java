@@ -7,12 +7,16 @@ import android.support.v4.app.FragmentManager;
 
 public abstract class SingleFragmentActivity extends FragmentActivity {
 
-    protected abstract QuizFragment createFragment();
+    protected abstract Fragment createFragment();
+
+    protected int getLayoutResId() {
+        return R.layout.activity_quiz;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_fragment);
+        setContentView(getLayoutResId());
 
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);

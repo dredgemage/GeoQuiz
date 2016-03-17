@@ -23,7 +23,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class QuizFragment extends Fragment {
+public class QuizFragment extends android.support.v4.app.Fragment {
 
     // view objects
     private Button mTrueButton;
@@ -33,7 +33,7 @@ public class QuizFragment extends Fragment {
     private TextView mQuestionTextView;
 
     // logical objects
-    private static final String ARG_QUIZ_ID = "quiz_id";
+    public static final String EXTRA_QUIZ_ID = "quiz_id";
     private ArrayList<String> Questions = new ArrayList<>();
     private ArrayList<Boolean> Answers = new ArrayList<>();
     private Question[] mQuestionBank = new Question[11];
@@ -107,12 +107,13 @@ public class QuizFragment extends Fragment {
         Log.d("DEBUG", "resetQuestions finished");
     }
 
-    public static QuizFragment newInstance(UUID quizId) {
+    public static android.support.v4.app.Fragment newInstance(UUID quizId) {
         Bundle args = new Bundle();
-        args.putSerializable(ARG_QUIZ_ID, quizId);
+        args.putSerializable(EXTRA_QUIZ_ID, quizId);
 
-        QuizFragment fragment = new QuizFragment();
+        android.support.v4.app.Fragment fragment = new QuizFragment();
         fragment.setArguments(args);
+
         return fragment;
     }
 
